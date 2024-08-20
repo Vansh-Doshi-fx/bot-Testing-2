@@ -13,8 +13,11 @@ import time
 import psutil
 import logging
 import re
+from fastapi import FastAPI
 
 logging.basicConfig(level=logging.DEBUG)
+
+app = FastAPI()
 
 # Function to get the default branch of the repository
 def get_default_branch(repo_url, token):
@@ -153,6 +156,11 @@ def replace_folder_name_in_paths(file_paths, pattern, repo_dir):
         modified_paths.append(new_file_path)
     
     return modified_paths
+
+# FastAPI endpoint to delete temp file
+@app.delete("/delete_temp_file")
+def api_delete_temp_file(repo_url: str):
+    delete_temp_file(repo_url)
 
 # Streamlit UI
 st.title("GitHub Pull Request Creator")
