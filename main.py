@@ -118,21 +118,18 @@ def search_file_in_temp(file_name_part):
     # If the file is not found
     return None
 
-def delete_temp_file(repo_url):
-    if not repo_url:
-        st.error("Please fill in the repository url")
-    else:   
-        repo_parts = repo_url.rstrip('/').split('/')
-        repo_owner = repo_parts[-2]
-        repo_name = repo_parts[-1]
+def delete_temp_file(repo_url): 
+    repo_parts = repo_url.rstrip('/').split('/')
+    repo_owner = repo_parts[-2]
+    repo_name = repo_parts[-1]
             
-        file_part_to_search = f"_{repo_name}"
-        found_file_path = search_file_in_temp(file_part_to_search)
-        if found_file_path:
-            os.remove(found_file_path)
-            st.error(f"deleted found file, path - {found_file_path}")
-        else:
-            st.info("no temp pkl file to delete")
+    file_part_to_search = f"_{repo_name}"
+    found_file_path = search_file_in_temp(file_part_to_search)
+    if found_file_path:
+        os.remove(found_file_path)
+        return f"deleted found file, path - {found_file_path}"
+    else:
+        return "no temp pkl file found to delete"
 
 # Function to replace the folder name in the paths
 def replace_folder_name_in_paths(file_paths, pattern, repo_dir):
@@ -164,94 +161,115 @@ action = st.radio("Action", ("Modify existing files", "Create a new file"))
 prompt = st.text_area("Prompt", "")
 on = st.toggle("Resync")
 if st.button("delete temp file"):
-    delete_temp_file(repo_url)
+    response = requests.post(f'{os.environ["Base_Url"]}/delete_temp_file/', json={'repo_url': repo_url})
+    # Optionally, handle the response.
+    if response.status_code == 200:
+        st.success("Temporary file deleted successfully.")
+    else:
+        st.error("Failed to delete the temporary file.")
 
     
 if st.button('Create Pull Request'):
-    # The message and nested widget will remain on the page
-    if not repo_url or not token or not source_branch or not prompt:
-        st.error("Please fill in all required fields.")
+    
+    json_to_pass = {
+        'repo_url': repo_url,
+        'token': token,
+        'source_branch': source_branch,
+        'destination_branch': destination_branch,
+        'prompt': prompt,
+        'resync': on,
+        'action': 'MODIFY' if action == 'Modify existing files' else 'CREATE'
+    }
+    
+    response = requests.post(f'{os.environ["Base_Url"]}/create_pull_request/',json=json_to_pass)
+    # Optionally, handle the response.
+    if response.status_code == 200:
+        st.success("PR created Successfully")
     else:
-        default_branch = get_default_branch(repo_url, token)
-        if not default_branch:
-            st.error("Failed to retrieve default branch. Please check your repository URL and token.")
-        else:
-            destination_branch = destination_branch or default_branch
+        st.error("Failed to create PR")
+    # if not repo_url or not token or not source_branch or not prompt:
+    #     st.error("Please fill in all required fields.")
+    # else:
+    #     default_branch = get_default_branch(repo_url, token)
+    #     if not default_branch:
+    #         st.error("Failed to retrieve default branch. Please check your repository URL and token.")
+    #     else:
+    #         destination_branch = destination_branch or default_branch
             
-            repo_parts = repo_url.rstrip('/').split('/')
-            repo_owner = repo_parts[-2]
-            repo_name = repo_parts[-1]
-            found_file_path:str|None = None
-            if not on:
-                file_part_to_search = f"_{repo_name}"
-                found_file_path = search_file_in_temp(file_part_to_search)
-                st.info(f"found file path - {found_file_path}")
-            else:
-                delete_temp_file(repo_url)
+    #         repo_parts = repo_url.rstrip('/').split('/')
+    #         repo_owner = repo_parts[-2]
+    #         repo_name = repo_parts[-1]
+    #         found_file_path:str|None = None
+    #         if not on:
+    #             file_part_to_search = f"_{repo_name}"
+    #             found_file_path = search_file_in_temp(file_part_to_search)
+    #             st.info(f"found file path - {found_file_path}")
+    #         else:
+    #             delete_temp_file(repo_url)
 
-            repo_dir = tempfile.mkdtemp(suffix=f"_{repo_name}")  # Manually create the temp directory
-            try:
-                Repo.clone_from(repo_url, repo_dir, branch=default_branch)
-                repo = Repo(repo_dir)
-                new_branch = source_branch
-                repo.git.checkout('-b', new_branch)
-                if(not found_file_path):
-                    temp_file_name = prepare_embeddings(repo_dir,repo_name)
-                else:
-                    temp_file_name = found_file_path
-                    st.info(f"temp file name - {temp_file_name}")
+    #         repo_dir = tempfile.mkdtemp(suffix=f"_{repo_name}")  # Manually create the temp directory
+    #         try:
+    #             Repo.clone_from(repo_url, repo_dir, branch=default_branch)
+    #             repo = Repo(repo_dir)
+    #             new_branch = source_branch
+    #             repo.git.checkout('-b', new_branch)
+    #             if(not found_file_path):
+    #                 temp_file_name = prepare_embeddings(repo_dir,repo_name)
+    #             else:
+    #                 temp_file_name = found_file_path
+    #                 st.info(f"temp file name - {temp_file_name}")
                     
-                if temp_file_name:
-                    relevant_texts, relevant_files, file_chunks = retrieve_relevant_code(prompt, temp_file_name)
-                    if not on:
-                        # Compile the regex pattern to match folder names of the form temp.*_my_repo
-                        pattern = re.compile(rf'tmp.*_{re.escape(repo_name)}')
-                        # Example usage
-                        modified_file_paths = replace_folder_name_in_paths(relevant_files, pattern, repo_dir)
-                        relevant_files = modified_file_paths
+    #             if temp_file_name:
+    #                 relevant_texts, relevant_files, file_chunks = retrieve_relevant_code(prompt, temp_file_name)
+    #                 if not on:
+    #                     # Compile the regex pattern to match folder names of the form temp.*_my_repo
+    #                     pattern = re.compile(rf'tmp.*_{re.escape(repo_name)}')
+    #                     # Example usage
+    #                     modified_file_paths = replace_folder_name_in_paths(relevant_files, pattern, repo_dir)
+    #                     relevant_files = modified_file_paths
                     
-                    st.info(f"relevant files - {relevant_files}")
+    #                 st.info(f"relevant files - {relevant_files}")
 
-                    if action == "Modify existing files":
-                        for file_path in relevant_files:
-                            with open(file_path, "r") as f:
-                                original_code = f.read()
-                            changes = generate_code_changes(prompt, original_code)
-                            with open(file_path, "w") as f:
-                                f.write(changes)
+    #                 if action == "Modify existing files":
+    #                     for file_path in relevant_files:
+    #                         with open(file_path, "r") as f:
+    #                             original_code = f.read()
+    #                         changes = generate_code_changes(prompt, original_code)
+    #                         with open(file_path, "w") as f:
+    #                             f.write(changes)
                                 
 
-                    else:  # Create a new file
-                        new_file_path = create_new_file(prompt, repo_dir)
-                        st.info(f"New file created: {new_file_path}")
-                        new_file_name = new_file_path.split(os.sep)[-1]
-                        with open(new_file_path, "r") as f:
-                            new_file_code = f.read()
-                        for file_path in relevant_files:
-                            with open(file_path, "r") as f:
-                                original_code = f.read()
-                            changes = generate_newFile_based_code_changes(prompt,original_code, new_file_code,new_file_name)
-                            with open(file_path, "w") as f:
-                                f.write(changes)
-                else:
-                    new_file_path = create_new_file(prompt, repo_dir)
-                    st.info(f"New file created: {new_file_path}")
+    #                 else:  # Create a new file
+    #                     new_file_path = create_new_file(prompt, repo_dir)
+    #                     st.info(f"New file created: {new_file_path}")
+    #                     new_file_name = new_file_path.split(os.sep)[-1]
+    #                     with open(new_file_path, "r") as f:
+    #                         new_file_code = f.read()
+    #                     for file_path in relevant_files:
+    #                         with open(file_path, "r") as f:
+    #                             original_code = f.read()
+    #                         changes = generate_newFile_based_code_changes(prompt,original_code, new_file_code,new_file_name)
+    #                         with open(file_path, "w") as f:
+    #                             f.write(changes)
+    #             else:
+    #                 new_file_path = create_new_file(prompt, repo_dir)
+    #                 st.info(f"New file created: {new_file_path}")
                     
                 
-                repo.git.add(all=True)
-                repo.index.commit("Automated changes based on user prompt")
+    #             repo.git.add(all=True)
+    #             repo.index.commit("Automated changes based on user prompt")
                 
-                push_changes(repo, 'origin', new_branch, token)  # Push the changes using the authenticated URL
+    #             push_changes(repo, 'origin', new_branch, token)  # Push the changes using the authenticated URL
                 
-                result = create_pull_request_2(repo_owner,repo_name, token, new_branch, destination_branch)
-                if 'number' in result:
-                    st.success(f"Pull Request created successfully! PR number: {result['number']}")
-                    st.write(f"PR URL: {result['html_url']}")
-                else:
-                    st.error(f"Error creating Pull Request: {result.get('message', 'Unknown error')}")
-            finally:
-                repo.close()
-                del repo
-                time.sleep(2)  # Additional delay before cleanup
-                safe_rmtree(repo_dir)  # Safely delete the repository directory
-                st.info("Temporary directories have been deleted.") 
+    #             result = create_pull_request_2(repo_owner,repo_name, token, new_branch, destination_branch)
+    #             if 'number' in result:
+    #                 st.success(f"Pull Request created successfully! PR number: {result['number']}")
+    #                 st.write(f"PR URL: {result['html_url']}")
+    #             else:
+    #                 st.error(f"Error creating Pull Request: {result.get('message', 'Unknown error')}")
+    #         finally:
+    #             repo.close()
+    #             del repo
+    #             time.sleep(2)  # Additional delay before cleanup
+    #             safe_rmtree(repo_dir)  # Safely delete the repository directory
+    #             st.info("Temporary directories have been deleted.") 

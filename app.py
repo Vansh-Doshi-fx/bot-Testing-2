@@ -26,6 +26,10 @@ class Credentials(BaseModel):
     repo_url: str
     access_token: str
     username: str
+    
+class DeleteTemp(BaseModel):
+    repo_url: str
+
 @app.post("/validate_credentials/")
 async def validate_credentials(credentials: Credentials):
     headers = {
@@ -119,4 +123,10 @@ async def create_pull_request(request: PullRequestRequest):
                 await asyncio.sleep(2)  # Additional delay before cleanup
                 safe_rmtree(repo_dir)  # Safely delete the repository directory
 
-    
+@app.post("/delete_temp_file/")
+async def delete_temp_file_endpoint(request: DeleteTemp):
+    if request.repo_url:
+        message = delete_temp_file(request.repo_url)
+        return {"message": message}
+    else:
+        raise HTTPException(status_code=401, detail="please fill in Repo_url")
