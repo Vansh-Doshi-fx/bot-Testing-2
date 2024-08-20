@@ -4,12 +4,24 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import re
 from generate_file_name_and_extension import generate_FileName_and_extension
+from fastapi import FastAPI
+
 load_dotenv()
 open_ai_key=os.environ["OPENAI_API_KEY"]
 model=os.environ["MODEL"]
 Temperature=os.environ["TEMPERATURE"]
 Max_tokens=os.environ["MAX_TOKENS"]
 client=OpenAI(api_key=open_ai_key)
+
+app = FastAPI()
+on = False
+
+@app.get("/toggle")
+def toggle():
+    global on
+    on = True
+    return on
+
 def create_new_file(prompt, repo_dir):
     messages = [
         {

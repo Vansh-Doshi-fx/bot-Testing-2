@@ -2,6 +2,7 @@ import openai
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
+from fastapi import FastAPI
 
 load_dotenv()
 
@@ -45,3 +46,13 @@ def generate_FileName_and_extension(code):
     if len(result) == 1:
         return result[0], ''  # return the file name and an empty extension
     return result[0], result[1]
+
+app = FastAPI()
+
+on = False
+
+@app.get("/toggle")
+def toggle():
+    global on
+    on = True
+    return on
