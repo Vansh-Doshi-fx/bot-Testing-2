@@ -13,8 +13,18 @@ import time
 import psutil
 import logging
 import re
+from fastapi import FastAPI
 
 logging.basicConfig(level=logging.DEBUG)
+
+app = FastAPI()
+on = False
+
+@app.get("/toggle")
+def toggle():
+    global on
+    on = True
+    return on
 
 # Function to get the default branch of the repository
 def get_default_branch(repo_url, token):

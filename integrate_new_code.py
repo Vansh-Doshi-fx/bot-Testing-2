@@ -2,6 +2,7 @@ import openai
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
+from fastapi import FastAPI
 
 load_dotenv()
 
@@ -11,6 +12,16 @@ Temperature=os.environ["TEMPERATURE"]
 Max_tokens=os.environ["MAX_TOKENS"]
 
 client=OpenAI(api_key=open_ai_key)
+
+app = FastAPI()
+
+on = False
+
+@app.get("/toggle")
+def toggle():
+    global on
+    on = True
+    return on
 
 # Function to integrate new code using OpenAI GPT-4
 def generate_newFile_based_code_changes(prompt, original_code, new_file_code, new_file_name):
