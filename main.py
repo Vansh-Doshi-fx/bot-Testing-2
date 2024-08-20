@@ -13,6 +13,7 @@ import time
 import psutil
 import logging
 import re
+import requests
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -154,6 +155,13 @@ def replace_folder_name_in_paths(file_paths, pattern, repo_dir):
     
     return modified_paths
 
+# Function to check the status from the Flask app
+def check_status():
+    response = requests.get('http://127.0.0.1:5000/check')
+    if response.status_code == 200:
+        return response.json().get("status", False)
+    return False
+
 # Streamlit UI
 st.title("GitHub Pull Request Creator")
 repo_url = st.text_input("GitHub Repository URL", "")
@@ -162,7 +170,7 @@ source_branch = st.text_input("Feature branch", "")
 destination_branch = st.text_input("Destination Branch (leave empty to use default branch)")
 action = st.radio("Action", ("Modify existing files", "Create a new file"))
 prompt = st.text_area("Prompt", "")
-on = st.toggle("Resync")
+on = check_status()
 
 if st.button("delete temp file"):
     delete_temp_file(repo_url)
