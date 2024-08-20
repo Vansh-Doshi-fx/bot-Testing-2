@@ -13,8 +13,11 @@ import time
 import psutil
 import logging
 import re
+from fastapi import FastAPI
 
 logging.basicConfig(level=logging.DEBUG)
+
+app = FastAPI()
 
 # Function to get the default branch of the repository
 def get_default_branch(repo_url, token):
@@ -34,7 +37,8 @@ def get_default_branch(repo_url, token):
         return None
 
 # Function to create a Pull Request
-def create_pull_request(repo_owner,repo_name, token, source_branch, destination_branch):
+@app.post("/create_pull_request/")
+def create_pull_request(repo_owner: str, repo_name: str, token: str, source_branch: str, destination_branch: str):
     api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/pulls'
     headers = {
         'Authorization': f'token {token}',
@@ -242,9 +246,14 @@ if st.button('Create Pull Request'):
                 repo.git.add(all=True)
                 repo.index.commit("Automated changes based on user prompt")
                 
-                push_changes(repo, 'origin', new_branch, token)  # Push the changes using the authenticated URL
+                result = requests.post("http://localhost:8000/create_pull_request/", json={
+                    "repo_owner": repo_owner,
+                    "repo_name": repo_name,
+                    "token": token,
+                    "source_branch": new_branch,
+                    "destination_branch": destination_branch
+                }).json()
                 
-                result = create_pull_request(repo_owner,repo_name, token, new_branch, destination_branch)
                 if 'number' in result:
                     st.success(f"Pull Request created successfully! PR number: {result['number']}")
                     st.write(f"PR URL: {result['html_url']}")
