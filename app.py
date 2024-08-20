@@ -119,6 +119,4 @@ async def create_pull_request(request: PullRequestRequest):
                 await asyncio.sleep(2)  # Additional delay before cleanup
                 safe_rmtree(repo_dir)  # Safely delete the repository directory
 
-@app.post("/delete_temp_file/")
-async def delete_temp_file_endpoint(repo_url: str):
-    delete_temp_file(repo_url)
+    
