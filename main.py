@@ -13,8 +13,20 @@ import time
 import psutil
 import logging
 import re
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 logging.basicConfig(level=logging.DEBUG)
+
+app = FastAPI()
+
+class PullRequestRequest(BaseModel):
+    repo_owner: str
+    repo_name: str
+    token: str
+    source_branch: str
+    destination_branch: str
+    prompt: str
 
 # Function to get the default branch of the repository
 def get_default_branch(repo_url, token):
@@ -53,6 +65,13 @@ def create_pull_request(repo_owner,repo_name, token, source_branch, destination_
         return response.json()
     else:
         return response.json()
+
+@app.post("/create_pull_request")
+async def create_pull_request_endpoint(request: PullRequestRequest):
+    try:
+        return create_pull_request(request.repo_owner, request.repo_name, request.token, request.source_branch, request.destination_branch)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 # Function to handle permission errors while deleting files
 def on_rm_error(func, path, exc_info):
@@ -242,14 +261,25 @@ if st.button('Create Pull Request'):
                 repo.git.add(all=True)
                 repo.index.commit("Automated changes based on user prompt")
                 
-                push_changes(repo, 'origin', new_branch, token)  # Push the changes using the authenticated URL
+                # Call the FastAPI endpoint to create the pull request
+                response = requests.post("http://localhost:8000/create_pull_request", json={
+                    "repo_owner": repo_owner,
+                    "repo_name": repo_name,
+                    "token": token,
+                    "source_branch": new_branch,
+                    "destination_branch": destination_branch,
+                    "prompt": prompt
+                })
                 
-                result = create_pull_request(repo_owner,repo_name, token, new_branch, destination_branch)
-                if 'number' in result:
-                    st.success(f"Pull Request created successfully! PR number: {result['number']}")
-                    st.write(f"PR URL: {result['html_url']}")
+                if response.status_code == 200:
+                    result = response.json()
+                    if 'number' in result:
+                        st.success(f"Pull Request created successfully! PR number: {result['number']}")
+                        st.write(f"PR URL: {result['html_url']}")
+                    else:
+                        st.error(f"Error creating Pull Request: {result.get('message', 'Unknown error')}")
                 else:
-                    st.error(f"Error creating Pull Request: {result.get('message', 'Unknown error')}")
+                    st.error(f"Error creating Pull Request: {response.text}")
             finally:
                 repo.close()
                 del repo
