@@ -1,2 +1,36 @@
 
  Input token: 2486 output token: 2401
+ Input token: 163 output token: 69
+ Input token: 209 output token: 3
+ Input token: 905 output token: 502
+ Input token: 2607 output token: 2264
+ Input token: 173 output token: 36
+ Input token: 176 output token: 3
+ Input token: 883 output token: 539
+ Input token: 2585 output token: 2242
+ Input token: 980 output token: 636
+ Input token: 816 output token: 472
+ Input token: 898 output token: 554
+ Input token: 1479 output token: 1236
+ Input token: 880 output token: 640
+ Input token: 1075 output token: 833
+ Input token: 300 output token: 58
+ Input token: 133 output token: 9
+ Input token: 149 output token: 8
+ Input token: 1548 output token: 1267
+ Input token: 949 output token: 633
+ Input token: 1144 output token: 864
+ Input token: 369 output token: 57
+ Input token: 133 output token: 9
+ Input token: 149 output token: 8
+ Input token: 369 output token: 57
+ Input token: 1548 output token: 1231
+ Input token: 1144 output token: 864
+ Input token: 949 output token: 633
+ Input token: 140 output token: 21
+ Input token: 161 output token: 3
+ Input token: 1564 output token: 1282
+ Input token: 447 output token: 132
+ Input token: 1160 output token: 869
+ Input token: 965 output token: 668
+ Input token: 385 output token: 69

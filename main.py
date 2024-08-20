@@ -34,7 +34,7 @@ def get_default_branch(repo_url, token):
         return None
 
 # Function to create a Pull Request
-def create_pull_request(repo_owner,repo_name, token, source_branch, destination_branch):
+def create_pull_request_2(repo_owner,repo_name, token, source_branch, destination_branch):
     api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/pulls'
     headers = {
         'Authorization': f'token {token}',
@@ -163,7 +163,6 @@ destination_branch = st.text_input("Destination Branch (leave empty to use defau
 action = st.radio("Action", ("Modify existing files", "Create a new file"))
 prompt = st.text_area("Prompt", "")
 on = st.toggle("Resync")
-
 if st.button("delete temp file"):
     delete_temp_file(repo_url)
 
@@ -244,7 +243,7 @@ if st.button('Create Pull Request'):
                 
                 push_changes(repo, 'origin', new_branch, token)  # Push the changes using the authenticated URL
                 
-                result = create_pull_request(repo_owner,repo_name, token, new_branch, destination_branch)
+                result = create_pull_request_2(repo_owner,repo_name, token, new_branch, destination_branch)
                 if 'number' in result:
                     st.success(f"Pull Request created successfully! PR number: {result['number']}")
                     st.write(f"PR URL: {result['html_url']}")
