@@ -4,12 +4,15 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import re
 from generate_file_name_and_extension import generate_FileName_and_extension
+from fastapi import FastAPI
 load_dotenv()
 open_ai_key=os.environ["OPENAI_API_KEY"]
 model=os.environ["MODEL"]
 Temperature=os.environ["TEMPERATURE"]
 Max_tokens=os.environ["MAX_TOKENS"]
 client=OpenAI(api_key=open_ai_key)
+app = FastAPI()
+
 def create_new_file(prompt, repo_dir):
     messages = [
         {
@@ -49,3 +52,8 @@ def create_new_file(prompt, repo_dir):
     with open(file_path, "w") as f:
         f.write(new_file_content)
     return file_path
+
+@app.delete("/delete_temp_file")
+def delete_temp_file(github_repo_url: str):
+    # Call the delete_temp_file function here with the provided github_repo_url
+    pass
