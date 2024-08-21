@@ -1,34 +1,16 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 import os
 import tempfile
 from git import Repo
-from query_llm import generate_code_changes
-from integrate_new_code import generate_newFile_based_code_changes
-from generate_new_code import create_new_file
-from utils import *
+from services.query_llm import generate_code_changes
+from services.integrate_new_code import generate_newFile_based_code_changes
+from services.generate_new_code import create_new_file
+from utils.utils import *
 import re
 import asyncio
 import requests
-from main import get_default_branch, create_pull_request_2, on_rm_error, kill_processes_using_file, safe_rmtree, push_changes, search_file_in_temp, delete_temp_file, replace_folder_name_in_paths
-
+from models import Credentials, PullRequestRequest, DeleteTemp
 app = FastAPI()
-
-class PullRequestRequest(BaseModel):
-    repo_url: str
-    token: str
-    source_branch: str
-    destination_branch: str
-    prompt: str
-    resync : bool
-    action : str  #action can be CREATE or MODIFY to create new file or modify existing file respectively
-class Credentials(BaseModel):
-    repo_url: str
-    access_token: str
-    username: str
-    
-class DeleteTemp(BaseModel):
-    repo_url: str
 
 @app.post("/validate_credentials/")
 async def validate_credentials(credentials: Credentials):
